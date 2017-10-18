@@ -97,6 +97,7 @@ class Sniffer(QThread):
         QThread.__init__(self)
         self.i = 0
         self.table = None
+        self.filter = "tcp"
 
     def __del__(self):
         self.wait()
@@ -104,25 +105,30 @@ class Sniffer(QThread):
     def setTable(self, table):
         self.table = table
 
+    def setFilter(self, filter_arg):
+        self.filter = filter_arg
+
     def capture(self):
-        s = sniff(filter="tcp", prn=lambda packet: self.unpack(packet))
+        s = sniff(filter=self.filter, prn=lambda packet: self.unpack(packet))
 
     def unpack(self, packet):
-        src = packet[IP].src
-        dst = packet[IP].dst
-        sport = packet[TCP].sport
-        dport = packet[TCP].dport
-        flags = packet[TCP].flags
-        flags = getFlags(flags)
-        if 'PSH' in flags:
-            if sport == 443 or dport == 443 or sport == 22 or dport == 22:
-                raw = "Encrypted payload (" + str(sys.getsizeof(packet[Raw].load)) + " bytes)"
+        try:
+            src = packet[IP].src
+            dst = packet[IP].dst
+            sport = packet[TCP].sport
+            dport = packet[TCP].dport
+            flags = packet[TCP].flags
+            flags = getFlags(flags)
+            if 'PSH' in flags:
+                if sport == 443 or dport == 443 or sport == 22 or dport == 22:
+                    raw = "Encrypted payload (" + str(sys.getsizeof(packet[Raw].load)) + " bytes)"
+                else:
+                    raw = "Payload: " + str(packet[Raw].load)
             else:
-                raw = "Payload: " + str(packet[Raw].load)
-        else:
-            raw = ""
-
-        self.updateTable(src, dst, str(sport), str(dport), str(flags), raw)
+                raw = ""
+            self.updateTable(src, dst, str(sport), str(dport), str(flags), raw)
+        except:
+            print("Error in unpack")
 
     def updateTable(self, src, dst, sport, dport, flags, raw):
         self.table.setItem(self.i,0, QTableWidgetItem(src))
@@ -162,12 +168,28 @@ if __name__ == "__main__":
     # set layout
     grid = QGridLayout()
     grid.setSpacing(10)
-    #grid.setRowStretch(1, 1)
     w.setLayout(grid)
 
     # set title label
-    title_label = QLabel('Packet injector')
+    title_label = QLabel('Packet injector                 Filter (BPF syntax):')
     grid.addWidget(title_label, 0, 0)
+
+    # set filter text box
+    filter_textbox = QLineEdit()
+    grid.addWidget(filter_textbox, 0, 1)
+
+    # set filter button
+    btn_filter = QPushButton("Apply")
+    grid.addWidget(btn_filter, 0, 2)
+    @pyqtSlot()
+    def on_click():
+        f = filter_textbox.text()
+        if len(f) > 0:
+            sniffer.setFilter("tcp and " + f)
+            #sniffer.start()
+
+    btn_filter.clicked.connect(on_click)
+
 
     # prepare table
     table 	= QTableWidget()
@@ -176,6 +198,11 @@ if __name__ == "__main__":
     table.setColumnCount(6)
     table.setHorizontalHeaderLabels(("IP src; IP dst; Port src; Port dst; Flags; Raw").split(";"))
     grid.addWidget(table, 1, 0, 1, 3)
+
+    # start sniffing
+    sniffer = Sniffer()
+    sniffer.setTable(table)
+    sniffer.start()
 
     # prepare "Attack" label
     attack_label = QLabel('Attacks')
@@ -217,12 +244,6 @@ if __name__ == "__main__":
 
     grid.addWidget(btn_attack, 4, 2)
     btn_attack.clicked.connect(on_click)
-
-
-    # start sniffing
-    thread = Sniffer()
-    thread.setTable(table)
-    thread.start()
 
     # Show the window and run the app
     w.show()
