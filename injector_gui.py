@@ -98,6 +98,7 @@ class Sniffer(QThread):
         self.i = 0
         self.table = None
         self.filter = "tcp"
+        self.restart = False
 
     def __del__(self):
         self.wait()
@@ -107,6 +108,9 @@ class Sniffer(QThread):
 
     def setFilter(self, filter_arg):
         self.filter = filter_arg
+
+    def setRestart(self):
+        self.restart = True
 
     def capture(self):
         s = sniff(filter=self.filter, prn=lambda packet: self.unpack(packet))
@@ -129,6 +133,10 @@ class Sniffer(QThread):
             self.updateTable(src, dst, str(sport), str(dport), str(flags), raw)
         except:
             print("Error in unpack")
+
+        if self.restart:
+            self.restart = False
+            self.terminate()
 
     def updateTable(self, src, dst, sport, dport, flags, raw):
         self.table.setItem(self.i,0, QTableWidgetItem(src))
@@ -185,8 +193,12 @@ if __name__ == "__main__":
     def on_click():
         f = filter_textbox.text()
         if len(f) > 0:
+            global sniffer
+            sniffer.setRestart()
+            sniffer = Sniffer()
+            sniffer.setTable(table)
             sniffer.setFilter("tcp and " + f)
-            #sniffer.start()
+            sniffer.start()
 
     btn_filter.clicked.connect(on_click)
 
