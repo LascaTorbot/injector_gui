@@ -6,6 +6,7 @@ from PyQt4.QtCore import QTimer, QThread
 from PyQt4.QtGui import *
 from scapy.all import *
 import sys
+import os
 
 # RST ATTACK
 
@@ -59,7 +60,7 @@ class DoS(QThread):
         print("DoS done")
 
 
-    def attack(self):
+    def attack_dos(self):
         print("Lauching DoS...")
         pacote = Ether()/IP()/TCP()
 
@@ -88,7 +89,7 @@ class DoS(QThread):
         sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 1, prn=lambda x: self.inj(pacote, x))
 
     def run(self):
-        self.attack()
+        self.attack_dos()
 
 class Sniffer(QThread):
 
@@ -107,7 +108,6 @@ class Sniffer(QThread):
         s = sniff(filter="tcp", prn=lambda packet: self.unpack(packet))
 
     def unpack(self, packet):
-        #packet.show()
         src = packet[IP].src
         dst = packet[IP].dst
         sport = packet[TCP].sport
@@ -136,48 +136,90 @@ class Sniffer(QThread):
     def run(self):
         self.capture()
 
+class customAttack(QThread):
+    def __init__(self):
+        QThread.__init__(self)
+        self.attack_file = None
+
+    def __del__(self):
+        self.wait()
+
+    def getFile(self, window):
+        self.attack_file = QFileDialog.getOpenFileName(window, 'Open file',
+            'c:\\',"Scapy script (*.py)")
+
+    def run(self):
+        os.system('python2 ' + self.attack_file)
+
 if __name__ == "__main__":
 
     # create our window
     app = QApplication(sys.argv)
     w = QWidget()
     w.setWindowTitle('Packet injector')
-
     w.resize(700, 700)
 
-    title = QLabel('Packet injector')
-
+    # set layout
     grid = QGridLayout()
     grid.setSpacing(10)
-
-    table 	= QTableWidget()
+    #grid.setRowStretch(1, 1)
     w.setLayout(grid)
 
+    # set title label
+    title_label = QLabel('Packet injector')
+    grid.addWidget(title_label, 0, 0)
+
+    # prepare table
+    table 	= QTableWidget()
     tableItem 	= QTableWidgetItem()
-
-    grid.addWidget(title, 0, 0)
-    grid.addWidget(table, 1, 0)
-
-    # initiate table
     table.setRowCount(1000)
     table.setColumnCount(6)
-
     table.setHorizontalHeaderLabels(("IP src; IP dst; Port src; Port dst; Flags; Raw").split(";"))
+    grid.addWidget(table, 1, 0, 1, 3)
 
+    # prepare "Attack" label
+    attack_label = QLabel('Attacks')
+    grid.addWidget(attack_label, 2, 0)
 
-    w.move(300, 150)
-
-    btn = QPushButton('DoS')
-
+    # create DoS button
+    btn_dos = QPushButton('DoS (AresS)')
     dos = DoS()
-
     @pyqtSlot()
     def on_click():
         dos.start()
 
-    grid.addWidget(btn, 2, 0)
-    btn.clicked.connect(on_click)
+    grid.addWidget(btn_dos, 3, 0)
+    btn_dos.clicked.connect(on_click)
 
+
+    # create Load attack button
+    custom_attack = customAttack()
+    btn_load = QPushButton('Load attack')
+    @pyqtSlot()
+    def on_click():
+        custom_attack.getFile(w)
+        load_label.setText(custom_attack.attack_file)
+        btn_attack.setEnabled(True)
+
+    grid.addWidget(btn_load, 4, 0)
+    btn_load.clicked.connect(on_click)
+
+    # prepare "Load" label
+    load_label = QLabel('Nothing loaded')
+    grid.addWidget(load_label, 4, 1)
+
+    # create Load attack button
+    btn_attack = QPushButton('Attack!')
+    btn_attack.setEnabled(False)
+    @pyqtSlot()
+    def on_click():
+        custom_attack.start()
+
+    grid.addWidget(btn_attack, 4, 2)
+    btn_attack.clicked.connect(on_click)
+
+
+    # start sniffing
     thread = Sniffer()
     thread.setTable(table)
     thread.start()
