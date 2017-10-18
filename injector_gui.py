@@ -8,10 +8,9 @@ from scapy.all import *
 import sys
 import os
 
-# RST ATTACK
-
 from scapy.all import *
 
+# TCP Flags and their hex code
 FIN = 0x01
 SYN = 0x02
 RST = 0x04
@@ -20,27 +19,6 @@ ACK = 0x10
 URG = 0x20
 ECE = 0x40
 CWR = 0x80
-
-
-def getFlags(F):
-    f = []
-    if F & FIN:
-        f.append('FIN')
-    if F & SYN:
-        f.append('SYN')
-    if F & RST:
-        f.append('RST')
-    if F & PSH:
-        f.append('PSH')
-    if F & ACK:
-        f.append('ACK')
-    if F & URG:
-        f.append('URG')
-    if F & ECE:
-        f.append('ECE')
-    if F & CWR:
-        f.append('CWR')
-    return f
 
 class DoS(QThread):
     def __init__(self):
@@ -112,6 +90,26 @@ class Sniffer(QThread):
     def setRestart(self):
         self.restart = True
 
+    def getFlags(self, F):
+        f = []
+        if F & FIN:
+            f.append('FIN')
+        if F & SYN:
+            f.append('SYN')
+        if F & RST:
+            f.append('RST')
+        if F & PSH:
+            f.append('PSH')
+        if F & ACK:
+            f.append('ACK')
+        if F & URG:
+            f.append('URG')
+        if F & ECE:
+            f.append('ECE')
+        if F & CWR:
+            f.append('CWR')
+        return f
+
     def capture(self):
         s = sniff(filter=self.filter, prn=lambda packet: self.unpack(packet))
 
@@ -122,7 +120,7 @@ class Sniffer(QThread):
             sport = packet[TCP].sport
             dport = packet[TCP].dport
             flags = packet[TCP].flags
-            flags = getFlags(flags)
+            flags = self.getFlags(flags)
             if 'PSH' in flags:
                 if sport == 443 or dport == 443 or sport == 22 or dport == 22:
                     raw = "Encrypted payload (" + str(sys.getsizeof(packet[Raw].load)) + " bytes)"
