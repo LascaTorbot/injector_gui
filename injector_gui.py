@@ -156,6 +156,7 @@ class customAttack(QThread):
     def __del__(self):
         self.wait()
 
+
     def getFile(self, window):
         self.attack_file = QFileDialog.getOpenFileName(window, 'Open file',
             'c:\\',"Scapy script (*.py)")
@@ -254,6 +255,18 @@ if __name__ == "__main__":
 
     grid.addWidget(btn_attack, 4, 2)
     btn_attack.clicked.connect(on_click)
+
+    # original payload
+    original_label = QLabel('Original payload:')
+    grid.addWidget(original_label, 5, 0, 1, 1)
+    text_original = QPlainTextEdit()
+    grid.addWidget(text_original, 6, 0, 1, 1)
+
+    # new payload
+    new_label = QLabel('New payload:')
+    grid.addWidget(new_label, 5, 1, 1, 1)
+    text_new = QPlainTextEdit()
+    grid.addWidget(text_new, 6, 1, 1, 4)
 
     # Show the window and run the app
     w.show()
