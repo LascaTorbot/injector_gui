@@ -1,8 +1,8 @@
 #!/bin/python
 
 import sys
-from PyQt4.QtCore import pyqtSlot, SIGNAL,SLOT
-from PyQt4.QtCore import QTimer, QThread
+from PyQt4.QtCore import pyqtSlot, SIGNAL,SLOT, pyqtSignal
+from PyQt4.QtCore import QTime, QThread
 from PyQt4.QtGui import *
 from scapy.all import *
 import sys
@@ -23,9 +23,13 @@ CWR = 0x80
 class DoS(QThread):
     def __init__(self):
         QThread.__init__(self)
+        self.textBox = None
 
     def __del__(self):
         self.wait()
+
+    def setTextBox(self, textBox):
+        self.textBox = textBox
 
     def inj(self, pacote, pkt):
         pacote[TCP].dport = pkt[TCP].sport
@@ -35,11 +39,10 @@ class DoS(QThread):
         #pacote.show2()
         #for i in range(0, 15):
         sendp(pacote, iface="virbr0")
-        print("DoS done")
+        self.textBox.appendText("\nDoS done")
 
 
     def attack_dos(self):
-        print("Lauching DoS...")
         pacote = Ether()/IP()/TCP()
 
         # Ether
@@ -54,6 +57,7 @@ class DoS(QThread):
         pacote[IP].dst = "192.168.122.142"
         pacote[IP].len = 40
         #pacote[IP].chksum =  0x7d9e
+
 
         # TCP
         pacote[TCP].sport = 8080
@@ -164,13 +168,38 @@ class customAttack(QThread):
     def run(self):
         os.system('python2 ' + self.attack_file)
 
+class TextBox(QPlainTextEdit):
+    def __init__(self, text=""):
+        super(TextBox, self).__init__()
+        self.text = text
+
+    def setText(self, text):
+        self.text = text
+
+    def appendText(self, text):
+        self.text +=  text
+
+    def getText(self):
+        return self.text
+
+    def updateText(self):
+        print("updateText")
+        self.setPlainText(self.text)
+
+class MainWindow(QWidget):
+    def __init__(self):
+        super(MainWindow, self).__init__()
+
+    def updateUi(self):
+        print('sdasd')
+
 if __name__ == "__main__":
 
     # create our window
     app = QApplication(sys.argv)
-    w = QWidget()
+    w = MainWindow()
     w.setWindowTitle('Packet injector')
-    w.resize(700, 700)
+    w.resize(700, 900)
 
     # set layout
     grid = QGridLayout()
@@ -220,10 +249,12 @@ if __name__ == "__main__":
     grid.addWidget(attack_label, 2, 0)
 
     # create DoS button
-    btn_dos = QPushButton('DoS (AresS)')
+    btn_dos = QPushButton('DoS (Ares)')
     dos = DoS()
     @pyqtSlot()
     def on_click():
+        text_log.appendText("DoS starting...")
+        text_log.updateText()
         dos.start()
 
     grid.addWidget(btn_dos, 3, 0)
@@ -256,17 +287,29 @@ if __name__ == "__main__":
     grid.addWidget(btn_attack, 4, 2)
     btn_attack.clicked.connect(on_click)
 
+    # system log
+    log_label = QLabel('System log:')
+    grid.addWidget(log_label, 5, 0)
+    text_log = TextBox()
+    text_log.setEnabled(False)
+    grid.addWidget(text_log, 6, 0)
+    w.connect(dos, SIGNAL("finished()"), text_log.updateText)
+
     # original payload
     original_label = QLabel('Original payload:')
-    grid.addWidget(original_label, 5, 0, 1, 1)
-    text_original = QPlainTextEdit()
-    grid.addWidget(text_original, 6, 0, 1, 1)
+    grid.addWidget(original_label, 5, 1)
+    text_original = TextBox()
+    text_original.setEnabled(False)
+    grid.addWidget(text_original, 6, 1)
 
     # new payload
     new_label = QLabel('New payload:')
-    grid.addWidget(new_label, 5, 1, 1, 1)
+    grid.addWidget(new_label, 5, 2)
     text_new = QPlainTextEdit()
-    grid.addWidget(text_new, 6, 1, 1, 4)
+    text_new.setReadOnly(True)
+    grid.addWidget(text_new, 6, 2)
+
+    dos.setTextBox(text_log)
 
     # Show the window and run the app
     w.show()
