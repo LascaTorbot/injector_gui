@@ -64,7 +64,6 @@ class DoS(QThread):
         sendp(pacote, iface="virbr0")
         self.new_textBox.setText("Trigged packet:\n src IP: "+ pacote[IP].src + "\n dst IP: " + pacote[IP].dst + "\n ACK: " + str(pacote[TCP].ack) + "\n SEQ: " + str(pacote[TCP].seq) + "\n flags: " + str(getFlags(pacote[TCP].flags)))
         sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 2)
-        print(str(getFlags(sniffing[0][TCP].flags)))
         flags = str(getFlags(sniffing[1][TCP].flags))
         if 'RST' in flags:
             self.log_textBox.appendText("\nDoS successfull!\n")
@@ -127,6 +126,25 @@ class Sniffer(QThread):
     def capture(self):
         s = sniff(filter=self.filter, prn=lambda packet: self.unpack(packet))
 
+    def setTableColor(self, flags):
+        if 'RST' in flags:
+            cell_color = QColor(164, 0, 0)
+            font_color = QColor(255, 255, 255)
+        elif 'FIN' in flags or 'SYN' in flags:
+            cell_color = QColor(160, 160, 160)
+            font_color = QColor(0, 0, 0)
+        elif 'ACK' in flags and 'PSH' in flags:
+            cell_color = QColor(228, 255, 199)
+            font_color = QColor(0, 0, 0)
+        elif 'ACK' in flags:
+            cell_color = QColor(231, 230, 255)
+            font_color = QColor(0, 0, 0)
+        else:
+            cell_color = QColor(255, 255, 255)
+            font_color = QColor(0, 0, 0)
+
+        return cell_color, font_color
+
     def unpack(self, packet):
         try:
             src = packet[IP].src
@@ -142,21 +160,27 @@ class Sniffer(QThread):
                     raw = "Payload: " + str(packet[Raw].load)
             else:
                 raw = ""
-            self.updateTable(src, dst, str(sport), str(dport), str(flags), raw)
         except:
             print("Error in unpack")
+
+        finally:
+            self.updateTable([src, dst, str(sport), str(dport), str(flags), raw])
 
         if self.restart:
             self.restart = False
             self.terminate()
 
-    def updateTable(self, src, dst, sport, dport, flags, raw):
-        self.table.setItem(self.i,0, QTableWidgetItem(src))
-        self.table.setItem(self.i,1, QTableWidgetItem(dst))
-        self.table.setItem(self.i,2, QTableWidgetItem(sport))
-        self.table.setItem(self.i,3, QTableWidgetItem(dport))
-        self.table.setItem(self.i,4, QTableWidgetItem(str(flags)))
-        self.table.setItem(self.i,5, QTableWidgetItem(raw))
+    def updateTable(self, args):
+        cell_color, font_color = self.setTableColor(args[4])
+
+        j = 0
+        for data in args:
+            item = QTableWidgetItem(data)
+            self.table.setItem(self.i, j, item)
+            item.setBackground(cell_color)
+            item.setForeground(font_color)
+            j += 1
+
         self.i += 1
 
     def run(self):
