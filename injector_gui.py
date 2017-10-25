@@ -4,7 +4,6 @@ import sys
 from PyQt4.QtCore import pyqtSlot, SIGNAL,SLOT, pyqtSignal
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import *
-from scapy.all import *
 import sys
 import os
 from injector_lib import getFlags, Sniffer
@@ -14,17 +13,30 @@ class customAttack(QThread):
     def __init__(self):
         QThread.__init__(self)
         self.attack_file = None
+        self.attack_obj = None
 
     def __del__(self):
         self.wait()
 
+    def setTextBox(self, log_textBox, original_textBox, new_textBox):
+        self.log_textBox = log_textBox
+        self.original_textBox = original_textBox
+        self.new_textBox = new_textBox
 
     def getFile(self, window):
         self.attack_file = QFileDialog.getOpenFileName(window, 'Open file',
-            'c:\\',"Scapy script (*.py)")
+            '',"Scapy script (*.py)")
+        path = self.attack_file.rfind('/')
+        self.attack_file = self.attack_file[path+1:].replace('.py', '')
+        self.setupAttack()
+
+    def setupAttack(self):
+        self.attack_obj = __import__(self.attack_file)
+        self.attack_obj = self.attack_obj.Attack()
+        self.attack_obj.setTextBox(self.log_textBox, self.original_textBox, self.new_textBox)
 
     def run(self):
-        os.system('python2 ' + self.attack_file)
+        self.attack_obj.attack()
 
 class TextBox(QPlainTextEdit):
     def __init__(self, text=""):
@@ -118,6 +130,7 @@ if __name__ == "__main__":
 
     # create Load attack button
     custom_attack = customAttack()
+
     btn_load = QPushButton('Load attack')
     @pyqtSlot()
     def on_click():
@@ -137,6 +150,8 @@ if __name__ == "__main__":
     btn_attack.setEnabled(False)
     @pyqtSlot()
     def on_click():
+        text_log.appendText("Starting " + custom_attack.attack_file + "...")
+        text_log.updateText()
         custom_attack.start()
 
     grid.addWidget(btn_attack, 4, 2)
@@ -149,6 +164,7 @@ if __name__ == "__main__":
     text_log.setEnabled(False)
     grid.addWidget(text_log, 6, 0)
     w.connect(rst, SIGNAL("finished()"), text_log.updateText)
+    w.connect(custom_attack, SIGNAL("finished()"), text_log.updateText)
 
     # original payload
     original_label = QLabel('Original payload:')
@@ -157,6 +173,7 @@ if __name__ == "__main__":
     text_original.setEnabled(False)
     grid.addWidget(text_original, 6, 1)
     w.connect(rst, SIGNAL("finished()"), text_original.updateText)
+    w.connect(custom_attack, SIGNAL("finished()"), text_original.updateText)
 
     # new payload
     new_label = QLabel('New payload:')
@@ -165,8 +182,10 @@ if __name__ == "__main__":
     text_new.setEnabled(False)
     grid.addWidget(text_new, 6, 2)
     w.connect(rst, SIGNAL("finished()"), text_new.updateText)
+    w.connect(custom_attack, SIGNAL("finished()"), text_new.updateText)
 
     rst.setTextBox(text_log, text_original, text_new)
+    custom_attack.setTextBox(text_log, text_original, text_new)
 
     # Show the window and run the app
     w.show()
