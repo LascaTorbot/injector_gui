@@ -208,39 +208,7 @@ if __name__ == "__main__":
     w.setTextBox(text_log, text_original, text_new)
     w.setAttackButton(btn_attack)
 
-    w_rst = QWidget()
-    w_rst.setWindowTitle('TCP Reset configuration')
-    w_rst.resize(300, 180)
-    w_rst_layout = QGridLayout()
-    w_rst.setLayout(w_rst_layout)
-
-    rst_lbl_target = QLabel("Target IP: ")
-    rst_txt_target = QLineEdit()
-    w_rst_layout.addWidget(rst_lbl_target, 0, 0)
-    w_rst_layout.addWidget(rst_txt_target, 0, 1)
-
-    rst_lbl_iface = QLabel("Net. Interface: ")
-    rst_txt_iface = QLineEdit()
-    w_rst_layout.addWidget(rst_lbl_iface, 1, 0)
-    w_rst_layout.addWidget(rst_txt_iface, 1, 1)
-
-    rst_lbl_filter = QLabel("BPF Filter: ")
-    rst_txt_filter = QLineEdit()
-    w_rst_layout.addWidget(rst_lbl_filter, 2, 0)
-    w_rst_layout.addWidget(rst_txt_filter, 2, 1)
-
-    rst_btn_att = QPushButton("Attack!")
-    w_rst_layout.addWidget(rst_btn_att, 3, 0)
-
-
-    @pyqtSlot()
-    def on_click():
-        text_log.appendText("TCP reset attack starting...\n")
-        rst.setTarget(rst_txt_iface.text(), rst_txt_filter.text(), rst_txt_target.text())
-        w_rst.close()
-        rst.start()
-
-    rst_btn_att.clicked.connect(on_click)
+    w_rst = rst.setupUI()
 
     # Show the window and run the app
     w.show()

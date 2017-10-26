@@ -1,4 +1,6 @@
 from PyQt4.QtCore import QThread
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtGui import QWidget, QGridLayout, QLabel, QPushButton, QLineEdit
 from scapy.all import *
 from injector_lib import getFlags
 
@@ -12,6 +14,43 @@ class Module_RST(QThread):
 
     def __del__(self):
         self.wait()
+
+    def setupUI(self):
+        w_rst = QWidget()
+        w_rst.setWindowTitle('TCP Reset configuration')
+        w_rst.resize(300, 180)
+        w_rst_layout = QGridLayout()
+        w_rst.setLayout(w_rst_layout)
+
+        rst_lbl_target = QLabel("Target IP: ")
+        rst_txt_target = QLineEdit()
+        w_rst_layout.addWidget(rst_lbl_target, 0, 0)
+        w_rst_layout.addWidget(rst_txt_target, 0, 1)
+
+        rst_lbl_iface = QLabel("Net. Interface: ")
+        rst_txt_iface = QLineEdit()
+        w_rst_layout.addWidget(rst_lbl_iface, 1, 0)
+        w_rst_layout.addWidget(rst_txt_iface, 1, 1)
+
+        rst_lbl_filter = QLabel("BPF Filter: ")
+        rst_txt_filter = QLineEdit()
+        w_rst_layout.addWidget(rst_lbl_filter, 2, 0)
+        w_rst_layout.addWidget(rst_txt_filter, 2, 1)
+
+        rst_btn_att = QPushButton("Attack!")
+        w_rst_layout.addWidget(rst_btn_att, 3, 0)
+
+        @pyqtSlot()
+        def on_click():
+            self.log_textBox.appendText("TCP reset attack starting...\n")
+            self.setTarget(rst_txt_iface.text(), rst_txt_filter.text(), rst_txt_target.text())
+            w_rst.close()
+            self.start()
+
+        rst_btn_att.clicked.connect(on_click)
+
+        return w_rst
+
 
     def setTextBox(self, log_textBox, original_textBox, new_textBox):
         self.log_textBox = log_textBox
