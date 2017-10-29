@@ -6,6 +6,7 @@ from PyQt4.QtCore import QThread
 from PyQt4.QtGui import *
 from injector_lib import getFlags, Sniffer
 from module_rst import Module_RST
+from module_dos import Module_DoS
 
 class customAttack(QThread):
     def __init__(self):
@@ -135,6 +136,8 @@ if __name__ == "__main__":
     grid.addWidget(attack_label, 2, 0)
 
     rst = Module_RST()
+    dos = Module_DoS()
+
     # create RST button
     btn_rst = QPushButton('TCP reset attack')
     @pyqtSlot()
@@ -145,6 +148,17 @@ if __name__ == "__main__":
 
     grid.addWidget(btn_rst, 3, 0)
     btn_rst.clicked.connect(on_click)
+
+    # create DoS button
+    btn_dos = QPushButton('Denial of Service attack')
+    @pyqtSlot()
+    def on_click():
+        w_dos.show()
+        text_log.appendText("Denial of Service attack starting...\n")
+        text_log.updateText()
+
+    grid.addWidget(btn_dos, 3, 1)
+    btn_dos.clicked.connect(on_click)
 
 
     # create Load attack button
@@ -204,11 +218,14 @@ if __name__ == "__main__":
     w.connect(rst, SIGNAL("finished()"), text_new.updateText)
 
     rst.setTextBox(text_log, text_original, text_new)
+    dos.setTextBox(text_log, text_original, text_new)
+
     custom_attack.setTextBox(text_log, text_original, text_new)
     w.setTextBox(text_log, text_original, text_new)
     w.setAttackButton(btn_attack)
 
     w_rst = rst.setupUI()
+    w_dos = dos.setupUI()
 
     # Show the window and run the app
     w.show()
