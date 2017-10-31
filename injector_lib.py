@@ -77,8 +77,12 @@ class Sniffer(QThread):
 
     def unpack(self, packet):
         try:
-            src = packet[IP].src
-            dst = packet[IP].dst
+            if IP in packet:
+                src = packet[IP].src
+                dst = packet[IP].dst
+            elif IPv6 in packet:
+                src = packet[IPv6].src
+                dst = packet[IPv6].dst
             sport = packet[TCP].sport
             dport = packet[TCP].dport
             flags = packet[TCP].flags
