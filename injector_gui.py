@@ -4,41 +4,10 @@ import sys
 from PyQt4.QtCore import pyqtSlot, SIGNAL,SLOT, pyqtSignal
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import *
-from injector_lib import getFlags, Sniffer
+from injector_lib import getFlags, Sniffer, customAttack
 from module_rst import Module_RST
 from module_dos import Module_DoS
-
-class customAttack(QThread):
-    def __init__(self):
-        QThread.__init__(self)
-        self.attack_file = None
-        self.attack_obj = None
-
-    def __del__(self):
-        self.wait()
-
-    def setTextBox(self, log_textBox, original_textBox, new_textBox):
-        self.log_textBox = log_textBox
-        self.original_textBox = original_textBox
-        self.new_textBox = new_textBox
-
-    def getFile(self, window):
-        self.attack_file = QFileDialog.getOpenFileName(window, 'Open file',
-            '',"Attack script (*.py)")
-        path = self.attack_file.rfind('/')
-        self.attack_file = self.attack_file[path+1:].replace('.py', '')
-        self.setupAttack()
-
-    def setupAttack(self):
-        if self.attack_file != " ":
-            self.attack_obj = __import__(self.attack_file)
-            self.attack_obj = self.attack_obj.Attack()
-            self.attack_obj.setTextBox(self.log_textBox, self.original_textBox, self.new_textBox)
-        else:
-            print("Import error")
-
-    def run(self):
-        self.attack_obj.attack()
+from module_run_script import Module_Run_Script
 
 class TextBox(QPlainTextEdit):
     def __init__(self, text=""):
@@ -135,10 +104,9 @@ if __name__ == "__main__":
     attack_label = QLabel('Attacks')
     grid.addWidget(attack_label, 2, 0)
 
-    rst = Module_RST()
-    dos = Module_DoS()
 
     # create RST button
+    rst = Module_RST()
     btn_rst = QPushButton('TCP reset attack')
     @pyqtSlot()
     def on_click():
@@ -148,8 +116,10 @@ if __name__ == "__main__":
 
     grid.addWidget(btn_rst, 3, 0)
     btn_rst.clicked.connect(on_click)
+    w_rst = rst.setupUI()
 
     # create DoS button
+    dos = Module_DoS()
     btn_dos = QPushButton('Denial of Service attack')
     @pyqtSlot()
     def on_click():
@@ -159,6 +129,20 @@ if __name__ == "__main__":
 
     grid.addWidget(btn_dos, 3, 1)
     btn_dos.clicked.connect(on_click)
+    w_dos = dos.setupUI()
+
+
+    # create Run script button
+    run = Module_Run_Script()
+    btn_run = QPushButton('Run script')
+    @pyqtSlot()
+    def on_click():
+        w_run.show()
+        text_log.appendText("Runing script...\n")
+        text_log.updateText()
+
+    grid.addWidget(btn_run, 3, 1)
+    btn_run.clicked.connect(on_click)
 
 
     # create Load attack button
@@ -223,9 +207,6 @@ if __name__ == "__main__":
     custom_attack.setTextBox(text_log, text_original, text_new)
     w.setTextBox(text_log, text_original, text_new)
     w.setAttackButton(btn_attack)
-
-    w_rst = rst.setupUI()
-    w_dos = dos.setupUI()
 
     # Show the window and run the app
     w.show()

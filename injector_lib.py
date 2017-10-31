@@ -1,6 +1,6 @@
 from scapy.all import *
 from PyQt4.QtCore import QThread
-from PyQt4.QtGui import QColor, QTableWidgetItem
+from PyQt4.QtGui import QColor, QTableWidgetItem, QFileDialog
 
 def getFlags(F):
     # TCP Flags and their hex code
@@ -119,3 +119,35 @@ class Sniffer(QThread):
 
     def run(self):
         self.capture()
+
+class customAttack(QThread):
+    def __init__(self):
+        QThread.__init__(self)
+        self.attack_file = None
+        self.attack_obj = None
+
+    def __del__(self):
+        self.wait()
+
+    def setTextBox(self, log_textBox, original_textBox, new_textBox):
+        self.log_textBox = log_textBox
+        self.original_textBox = original_textBox
+        self.new_textBox = new_textBox
+
+    def getFile(self, window):
+        self.attack_file = QFileDialog.getOpenFileName(window, 'Open file',
+            '',"Attack script (*.py)")
+        path = self.attack_file.rfind('/')
+        self.attack_file = self.attack_file[path+1:].replace('.py', '')
+        self.setupAttack()
+
+    def setupAttack(self):
+        if self.attack_file != " ":
+            self.attack_obj = __import__(self.attack_file)
+            self.attack_obj = self.attack_obj.Attack()
+            self.attack_obj.setTextBox(self.log_textBox, self.original_textBox, self.new_textBox)
+        else:
+            print("Import error")
+
+    def run(self):
+        self.attack_obj.attack()
