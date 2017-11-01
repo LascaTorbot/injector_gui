@@ -1,6 +1,6 @@
 from scapy.all import *
 from PyQt4.QtCore import QThread
-from PyQt4.QtGui import QColor, QTableWidgetItem, QFileDialog
+from PyQt4.QtGui import QColor, QTableWidgetItem, QFileDialog, QPlainTextEdit
 
 def getFlags(F):
     # TCP Flags and their hex code
@@ -151,3 +151,20 @@ class customAttack(QThread):
 
     def run(self):
         self.attack_obj.attack()
+
+class TextBox(QPlainTextEdit):
+    def __init__(self, text=""):
+        super(TextBox, self).__init__()
+        self.text = text
+
+    def setText(self, text):
+        self.text = text
+
+    def appendText(self, text):
+        self.text +=  text
+
+    def getText(self):
+        return self.text
+
+    def updateText(self):
+        self.setPlainText(self.text)

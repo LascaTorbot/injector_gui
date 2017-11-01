@@ -4,27 +4,10 @@ import sys
 from PyQt4.QtCore import pyqtSlot, SIGNAL,SLOT, pyqtSignal
 from PyQt4.QtCore import QThread
 from PyQt4.QtGui import *
-from injector_lib import getFlags, Sniffer, customAttack
+from injector_lib import *
 from module_rst import Module_RST
 from module_dos import Module_DoS
 from module_run_script import Module_Run_Script
-
-class TextBox(QPlainTextEdit):
-    def __init__(self, text=""):
-        super(TextBox, self).__init__()
-        self.text = text
-
-    def setText(self, text):
-        self.text = text
-
-    def appendText(self, text):
-        self.text +=  text
-
-    def getText(self):
-        return self.text
-
-    def updateText(self):
-        self.setPlainText(self.text)
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -143,6 +126,7 @@ if __name__ == "__main__":
 
     grid.addWidget(btn_run, 3, 1)
     btn_run.clicked.connect(on_click)
+    w_run = run.setupUI()
 
 
     # create Load attack button
@@ -183,7 +167,6 @@ if __name__ == "__main__":
     text_log = TextBox()
     text_log.setEnabled(False)
     grid.addWidget(text_log, 6, 0)
-    w.connect(rst, SIGNAL("finished()"), text_log.updateText)
 
     # original payload
     original_label = QLabel('')
@@ -191,7 +174,6 @@ if __name__ == "__main__":
     text_original = TextBox()
     text_original.setEnabled(False)
     grid.addWidget(text_original, 6, 1)
-    w.connect(rst, SIGNAL("finished()"), text_original.updateText)
 
     # new payload
     new_label = QLabel('')
@@ -199,10 +181,10 @@ if __name__ == "__main__":
     text_new = TextBox()
     text_new.setEnabled(False)
     grid.addWidget(text_new, 6, 2)
-    w.connect(rst, SIGNAL("finished()"), text_new.updateText)
 
     rst.setTextBox(text_log, text_original, text_new)
     dos.setTextBox(text_log, text_original, text_new)
+    run.setTextBox(text_log, text_original, text_new)
 
     custom_attack.setTextBox(text_log, text_original, text_new)
     w.setTextBox(text_log, text_original, text_new)
