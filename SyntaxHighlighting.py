@@ -1,3 +1,5 @@
+### CREDITS: PyQt/Python wiki: https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
+
 import sys
 from  PyQt4 import QtGui
 from PyQt4.QtCore import QRegExp

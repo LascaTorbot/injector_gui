@@ -14,3 +14,9 @@ python injector_gui.py
 ```
 #### Custom attacks
 You can add yours own custom attacks. Use the attack_sample.py file to write it. Your actions must be write on `attack` method and you can use the text boxes (log_textBox, original_textBox, new_textBox) to interact with the GUI.
+
+#### Scripting
+Also, you can write scripts to launch custom and quickly attacks. Click on "Run script" button and load your file. The syntax is like python `if`:
+``` python
+condition1 and condition2 or conditionN: expression1, expression2, expressionN
+```
