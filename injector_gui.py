@@ -7,6 +7,7 @@ from PyQt4.QtGui import *
 from injector_lib import *
 from module_rst import Module_RST
 from module_dos import Module_DoS
+import module_run_script
 from module_run_script import Module_Run_Script
 
 class MainWindow(QWidget):
@@ -100,6 +101,7 @@ if __name__ == "__main__":
     grid.addWidget(btn_rst, 3, 0)
     btn_rst.clicked.connect(on_click)
     w_rst = rst.setupUI()
+    w.connect(rst, SIGNAL("finished()"), w.updateScreen)
 
     # create DoS button
     dos = Module_DoS()
@@ -127,6 +129,7 @@ if __name__ == "__main__":
     grid.addWidget(btn_run, 3, 1)
     btn_run.clicked.connect(on_click)
     w_run = run.setupUI()
+    w.connect(run, SIGNAL("finished()"), w.updateScreen)
 
 
     # create Load attack button
@@ -185,9 +188,10 @@ if __name__ == "__main__":
     rst.setTextBox(text_log, text_original, text_new)
     dos.setTextBox(text_log, text_original, text_new)
     run.setTextBox(text_log, text_original, text_new)
-
+    module_run_script.setTextBox(text_log, text_original, text_new)
     custom_attack.setTextBox(text_log, text_original, text_new)
     w.setTextBox(text_log, text_original, text_new)
+
     w.setAttackButton(btn_attack)
 
     # Show the window and run the app

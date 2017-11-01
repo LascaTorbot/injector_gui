@@ -10,7 +10,7 @@ from injector_lib import getFlags, TextBox
 # Attack the IP passed with a generic Denail of Service
 # TODO: implement the package sending
 def DoS(ip):
-        print("Attacking", ip)
+        original_textBox.setText("Attacking " + ip)
 
 
 # Return True if pkt contains the substring
@@ -41,6 +41,15 @@ def destin_url(hostname):
 def getIP(url):
         return socket.gethostbyname(url)
 
+log_textBox = None
+original_textBox = None
+new_textBox = None
+
+def setTextBox(log, original, new):
+    global log_textBox, original_textBox, new_textBox
+    log_textBox = log
+    original_textBox = original
+    new_textBox = new
 
 class Module_Run_Script(QThread):
     def __init__(self):
