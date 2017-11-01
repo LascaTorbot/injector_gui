@@ -1,8 +1,9 @@
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtGui import QWidget, QGridLayout, QLabel, QPushButton, QLineEdit
+from PyQt4.QtGui import QWidget, QGridLayout, QLabel, QPushButton, QLineEdit, QComboBox
 from scapy.all import *
 from injector_lib import getFlags
+import netifaces
 
 class Module_DoS(QThread):
     def __init__(self):
@@ -29,9 +30,11 @@ class Module_DoS(QThread):
         window_layout.addWidget(txt_source, 1, 1)
 
         lbl_iface = QLabel("Net. Interface: ")
-        txt_iface = QLineEdit()
+        ifaces = netifaces.interfaces()
+        cb_iface = QComboBox()
+        cb_iface.addItems(ifaces)
         window_layout.addWidget(lbl_iface, 2, 0)
-        window_layout.addWidget(txt_iface, 2, 1)
+        window_layout.addWidget(cb_iface, 2, 1)
 
         lbl_number = QLabel("Number of packets: ")
         txt_number = QLineEdit()
@@ -44,7 +47,7 @@ class Module_DoS(QThread):
         @pyqtSlot()
         def on_click():
             self.log_textBox.appendText("Denial of Service attack starting...\n")
-            self.setTarget(txt_iface.text(), txt_target.text(), txt_source.text(), txt_number.text())
+            self.setTarget(cb_iface.currentText(), txt_target.text(), txt_source.text(), txt_number.text())
             #self.setTarget("", "192.168.122.95", "192.168.122.142", 10)
             window.close()
             self.attack()

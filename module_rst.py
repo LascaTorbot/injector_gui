@@ -3,6 +3,7 @@ from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtGui import QWidget, QGridLayout, QLabel, QPushButton, QLineEdit
 from scapy.all import *
 from injector_lib import getFlags
+import netifaces
 
 class Module_RST(QThread):
     def __init__(self):
@@ -28,7 +29,9 @@ class Module_RST(QThread):
         w_rst_layout.addWidget(rst_txt_target, 0, 1)
 
         rst_lbl_iface = QLabel("Net. Interface: ")
-        rst_txt_iface = QLineEdit()
+        ifaces = netifaces.interfaces()
+        cb_iface = QComboBox()
+        cb_iface.addItems(ifaces)
         w_rst_layout.addWidget(rst_lbl_iface, 1, 0)
         w_rst_layout.addWidget(rst_txt_iface, 1, 1)
 
@@ -43,7 +46,7 @@ class Module_RST(QThread):
         @pyqtSlot()
         def on_click():
             self.log_textBox.appendText("TCP reset attack starting...\n")
-            self.setTarget(rst_txt_iface.text(), rst_txt_filter.text(), rst_txt_target.text())
+            self.setTarget(cb_iface.currentText(), rst_txt_filter.text(), rst_txt_target.text())
             w_rst.close()
             self.start()
 

@@ -126,7 +126,7 @@ if __name__ == "__main__":
         text_log.appendText("Runing script...\n")
         text_log.updateText()
 
-    grid.addWidget(btn_run, 3, 1)
+    grid.addWidget(btn_run, 3, 2)
     btn_run.clicked.connect(on_click)
     w_run = run.setupUI()
     w.connect(run, SIGNAL("finished()"), w.updateScreen)

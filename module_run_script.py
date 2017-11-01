@@ -27,13 +27,13 @@ def contains(substring):
 
 # Return true if the source IP is hostname
 def source_url(hostname):
-        sniff(count=1, filter="ip src " + getIP(hostname))
+        sniff(count=1, filter="ip src " + hostname)
         return True
 
 
 # Return true if the destination IP is hostname
 def destin_url(hostname):
-        sniff(count=1, filter="ip dst " + getIP(hostname))
+        sniff(count=1, filter="ip dst " + hostname)
         return True
 
 
