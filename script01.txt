@@ -1,0 +1,1 @@
+source_url('ic.unicamp.br'): DoS(getIP('ic.unicamp.br')), print("atacando...")
