@@ -1,6 +1,6 @@
 from PyQt4.QtCore import QThread
 from PyQt4.QtCore import pyqtSlot
-from PyQt4.QtGui import QWidget, QGridLayout, QLabel, QPushButton, QLineEdit
+from PyQt4.QtGui import QWidget, QGridLayout, QLabel, QPushButton, QLineEdit, QComboBox
 from scapy.all import *
 from injector_lib import getFlags
 import netifaces
@@ -33,7 +33,7 @@ class Module_RST(QThread):
         cb_iface = QComboBox()
         cb_iface.addItems(ifaces)
         w_rst_layout.addWidget(rst_lbl_iface, 1, 0)
-        w_rst_layout.addWidget(rst_txt_iface, 1, 1)
+        w_rst_layout.addWidget(cb_iface, 1, 1)
 
         rst_lbl_filter = QLabel("BPF Filter: ")
         rst_txt_filter = QLineEdit()
