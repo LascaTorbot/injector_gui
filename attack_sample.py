@@ -1,4 +1,11 @@
-### RST Attack made to Ares botnet from experiments ###
+''' 
+Sample attack
+You should add your class to injector_gui.py, just as made with others 
+pre-installed, like rst = Module_RST(). Check for all occurrencies of rst
+to check how it works. Check TextBox class on injector_lib.py to check
+the methods to manipulate it.
+
+'''
 
 class Attack():
     def __init__(self):
